@@ -1,7 +1,7 @@
 npm install 
 npm install -g nlf 
 # Run nlf and capture its output to a file
-nlf > output.txt
+npx nlf > output.txt
 # Check if output.txt was created and has content
 if (-not (Test-Path "output.txt") -or (Get-Content "output.txt").Length -eq 0) {
     Write-Error "Error: output.txt was not created or is empty."
