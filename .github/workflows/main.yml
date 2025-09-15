@@ -1,0 +1,89 @@
+name: Node SBOM Scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project
+          path: .
+
+  sbom_scan:
+    runs-on: ubuntu-22.04
+    needs: build
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: project
+          path: .
+
+      - name: Install Node.js
+        run: |
+          chmod +x node-install.sh
+          sudo bash ./node-install.sh
+          node -v
+          npm -v
+
+      - name: Install PowerShell
+        run: |
+          wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell_7.5.0-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.5.0-1.deb_amd64.deb || true
+          sudo apt-get --fix-broken install -y
+          pwsh --version
+          rm -rf powershell_7.5.0-1.deb_amd64.deb
+
+      - name: Run get-details-1.ps1
+        shell: pwsh
+        run: |
+          # Run nlf before executing the script
+          ./get-details-1.ps1
+          echo "After get-details-1.ps1:"
+          ls -l
+
+      - name: Run get-details-2.ps1
+        shell: pwsh
+        run: |
+          ./get-details-2.ps1
+          echo "After get-details-2.ps1:"
+          ls -l
+
+      - name: Run merge-details.ps1
+        shell: pwsh
+        run: |
+          ./merge-details.ps1
+          echo "After merge-details.ps1:"
+          ls -l
+          cat sbom-result.txt || echo "sbom-result.txt not found"
+
+      - name: Run trivy.sh
+        run: |
+          bash ./trivy.sh
+          echo "After trivy.sh:"
+          ls -l
+          cat trivy-vulnerabilities.txt || echo "trivy-vulnerabilities.txt not found"
+
+      - name: Upload Trivy Vulnerabilities
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-vulnerabilities
+          path: trivy-vulnerabilities.txt
+
+      - name: Upload SBOM Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-result
+          path: sbom-result.txt
