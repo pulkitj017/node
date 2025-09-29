@@ -1,0 +1,50 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "Installing dependencies..."
+      - chmod +x node-install.sh
+      - ./node-install.sh
+      - node -v
+      - npm -v
+
+      # Install PowerShell
+      - wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell_7.5.0-1.deb_amd64.deb
+      - sudo dpkg -i powershell_7.5.0-1.deb_amd64.deb || true
+      - sudo apt-get --fix-broken install -y
+      - pwsh --version
+      - rm -rf powershell_7.5.0-1.deb_amd64.deb
+
+  pre_build:
+    commands:
+      - echo "Running get-details-1.ps1..."
+      - pwsh ./get-details-1.ps1
+      - ls -l
+      - echo "Running get-details-2.ps1..."
+      - pwsh ./get-details-2.ps1
+      - ls -l
+
+  build:
+    commands:
+      - echo "Merging SBOM details..."
+      - pwsh ./merge-details.ps1
+      - ls -l
+      - cat sbom-result.txt || echo "sbom-result.txt not found"
+
+      - echo "Running Trivy scan..."
+      - chmod +x trivy.sh
+      - ./trivy.sh
+      - ls -l
+      - cat trivy-vulnerabilities.txt || echo "trivy-vulnerabilities.txt not found"
+
+  post_build:
+    commands:
+      - echo "Build completed. Preparing artifacts..."
+
+artifacts:
+  files:
+    - sbom-result.txt
+    - trivy-vulnerabilities.txt
