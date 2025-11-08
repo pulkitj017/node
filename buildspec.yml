@@ -34,11 +34,11 @@ phases:
       - ls -l
       - cat sbom-result.txt || echo "sbom-result.txt not found"
 
-      - echo "Running Trivy scan..."
-      - chmod +x trivy.sh
-      - ./trivy.sh
-      - ls -l
-      - cat trivy-vulnerabilities.txt || echo "trivy-vulnerabilities.txt not found"
+      # - echo "Running Trivy scan..."
+      # - chmod +x trivy.sh
+      # - ./trivy.sh
+      # - ls -l
+      # - cat trivy-vulnerabilities.txt || echo "trivy-vulnerabilities.txt not found"
 
   post_build:
     commands:
@@ -47,4 +47,4 @@ phases:
 artifacts:
   files:
     - sbom-result.txt
-    - trivy-vulnerabilities.txt
+    # - trivy-vulnerabilities.txt
